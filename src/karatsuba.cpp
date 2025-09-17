@@ -76,5 +76,6 @@ int main(){
     cin >> u >> v;
     int n = max(u.length(), v.length());
     string resultado = karatsuba(u,v,n);
+    cout << "Produto:" << endl;
     cout << resultado;
 }
