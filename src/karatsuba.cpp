@@ -1,115 +1,81 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-vector<int> leia_vetor() {
-    string s;
-    cin >> s;
-    vector<int> a;
-    for (int i=0; i<s.length(); i++) {
-        a.push_back(s[i] - '0');
-    }
-    return a;
-}
-
-vector<int> soma(vector<int> &a, vector<int> &b){
-    vector<int> resultado;
+string soma(string a, string b){
+    string result;
     int i, j, aux = 0;
-    i = a.size()-1;
-    j = b.size()-1;
+    i = a.length()-1;
+    j = b.length()-1;
+
     while(i >= 0 || j >= 0 || aux){
         int soma = aux;
-        if(i >= 0) soma += a[i--];
-        if(j >= 0) soma += b[j--];
-        resultado.push_back(soma%10);
+        if(i >= 0) soma += a[i--] - '0';
+        if(j >= 0) soma += b[j--] - '0';
+        result.push_back(soma%10 + '0');
         aux = soma/10;
     }
-    reverse(resultado.begin(), resultado.end());
-    return resultado;
+    reverse(result.begin(), result.end());
+    return result;
 }
-
-vector<int> subtracao(vector<int> &a, vector<int> &b){
-    vector<int> resultado;
+string subtracao(string a, string b){
+    string result;
     int i, j, aux = 0;
-    i = a.size()-1;
-    j = b.size()-1;
+    i = a.length()-1;
+    j = b.length()-1;
 
     while(i >= 0){
-        int sub = a[i] - aux;
-        if(j >=0) sub -= b[j]; 
+        int sub = (a[i] - '0') - aux;
+        if(j >=0) sub -= b[j] - '0'; 
         if(sub < 0){
             sub += 10;
             aux = 1;
         }else{
             aux = 0;
         }
-        resultado.push_back(sub);
+        result.push_back(sub + '0');
         i--;
         j--;
     }
-    // Remove zeros à esquerda
-    int x = resultado.size() - 1;          
-    while (x > 0 && resultado[x] == 0) x--; 
-    resultado.resize(x + 1);
-    reverse(resultado.begin(), resultado.end());              
-    return resultado;
+    while (result.length() > 1 && result.back() == '0')
+        result.pop_back(); //retira os zeros à esquerda
+    reverse(result.begin(), result.end());
+    return result;
 }
 
-vector<int> produto_simples(vector<int> &u, vector<int> &v) {
-    int n = u.size(), m = v.size();
-    vector<int> resultado(n+m, 0);
-    for(int i = n-1; i >= 0; i--){
-        for(int j = m-1 ; j >= 0; j--){
-            long long int produto = u[i] * v[j];
-            long long int soma = produto + resultado[i+j+1];
-
-            resultado[i+j+1] = soma%10; //digito da unidade
-            resultado[i+j] += soma/10; //digito da dezena
-        }
-    }
-    return resultado;
-}
-
-vector <int> karatsuba(vector <int> &u, vector <int> &v){
-    int n = max(u.size(), v.size());
-    if(n<=32){ //se for pequeno, evita a recursão
-        return produto_simples(u,v);
+string karatsuba(string u, string v, int n){
+    if(n<=3){ //se for pequeno, evita a recursão
+        int produto = stoi(u) * stoi(v);
+        return to_string(produto);
     }else{
-        int k = n / 2;
+        int k = ceil(n/2);
         //digitos + significativos de u (/10^k)
-        vector<int> a(u.begin(), u.begin() + n - k);
+        string a = u.substr(0, u.length() - k);
         //digitos - significativos de u (mod 10^k)
-        vector<int> b(u.begin() + n - k, u.end());
+        string b = u.substr(u.length() - k);
         //digitos + significativos de v
-        vector<int> c(v.begin(), v.begin() + n - k);
-        //digitos - significativos de v
-        vector<int> d(v.begin() + n - k, v.end());
-
-        vector<int> ac = karatsuba(a,c);
-        vector<int> bd = karatsuba(b,d);
-        a = soma(a,b);
-        c = soma(c,d);
-        vector<int> y = karatsuba(a, c);
+        string c = v.substr(0, v.length() - k);
+        //digitos + significativos de v
+        string d = v.substr(v.length() - k);
         
-        // (y−ac−bd)
-        y = subtracao(y,ac);
-        y = subtracao(y,bd);
+        string ac = karatsuba(a,c,k);
+        string bd = karatsuba(b,d,k);
+        string y = karatsuba(soma(a,b), soma(c,d), k+1);
+        // (y − ac − bd)
+        string mid = subtracao(subtracao(y,ac),bd);
         // ac*10^(2k)
-        ac.insert(ac.end(), (2*k), 0);
-        // (y−ac−bd)*10^k
-        y.insert(y.end(), (k), 0);
-        //x = ac*10^(2k) + (y−ac−bd)*10k + bd
-        ac = soma(ac,y);
-        return soma(ac,bd);
+        ac = ac + string(2*k, '0');
+        // mid*10^k
+        mid = mid + string(k, '0');
+        //x = ac*10^(2k) + mid*10k + bd
+        return soma(soma(ac,mid),bd);
     }
 }
 
 int main(){
-    vector <int> u = leia_vetor();
-    vector <int> v = leia_vetor();
-
-    vector <int> resultado = karatsuba(u,v);
+    string u, v;
+    cin >> u >> v;
+    int n = max(u.length(), v.length());
+    string resultado = karatsuba(u,v,n);
     cout << "Produto:" << endl;
-    for(int x : resultado){
-        cout << x;
-    }
+    cout << resultado;
 }
